@@ -38,6 +38,7 @@ struct EffectPerformer {
       return select(range)
     case .replace(let range, let replacement):
       guard select(range), selectionHolds(range, of: expectedText) else { return false }
+      let caretLengthBefore = field.textMap?.caretLength ?? 0
       if replacement.isEmpty {
         Keystrokes.post(.delete)
       } else {
@@ -48,7 +49,9 @@ struct EffectPerformer {
       expectedText = edited as String
       let target = expectedText
       let startedAt = Date()
-      let didApply = waitUntil(timeout: Self.editTimeout) { field.textMap?.text == target }
+      let didApply = waitUntil(timeout: Self.editTimeout) {
+        field.textMap.map { editLanded(in: $0, expecting: target, caretLengthBefore: caretLengthBefore) } ?? false
+      }
       Log.write("edit \(didApply ? "applied" : "not applied") after \(Int(Date().timeIntervalSince(startedAt) * 1000))ms")
       return didApply
     case .moveCaretUp:
@@ -64,9 +67,27 @@ struct EffectPerformer {
   }
 
   private func select(_ range: NSRange) -> Bool {
-    guard let caretRange = field.textMap?.caretRange(forRange: range) else { return false }
-    field.setCaretSelection(caretRange)
-    return waitUntil(timeout: Self.settleTimeout) {
+    guard let textMap = field.textMap else { return false }
+    let caretRange = textMap.caretRange(forRange: range)
+    if textMap.sharesCaretWithNextLine(NSMaxRange(range)), let shortRange = oneShort(of: caretRange, requestedLength: range.length) {
+      // Setting a shared caret lands on the next line. A real key from one short stays on this one.
+      field.setCaretSelection(shortRange)
+      guard landed(on: shortRange) else { return false }
+      Keystrokes.post(.rightArrow, flags: caretRange.length > 0 ? .maskShift : [])
+    } else {
+      field.setCaretSelection(caretRange)
+    }
+    return landed(on: caretRange)
+  }
+
+  private func oneShort(of caretRange: NSRange, requestedLength: Int) -> NSRange? {
+    if caretRange.length > 0 { return NSRange(location: caretRange.location, length: caretRange.length - 1) }
+    guard requestedLength == 0, caretRange.location > 0 else { return nil }
+    return NSRange(location: caretRange.location - 1, length: 0)
+  }
+
+  private func landed(on caretRange: NSRange) -> Bool {
+    waitUntil(timeout: Self.settleTimeout) {
       field.caretSelection.map { selectionLanded($0, on: caretRange) } ?? false
     }
   }

@@ -8,7 +8,8 @@ public struct FieldTextMap: Sendable {
   private let caretForOffset: [Int]
 
   public init(axValue: String, caretText: String) {
-    let value = Array(axValue.utf16)
+    // A lone newline is how Slack reports a field that was emptied, from both sources.
+    let value = axValue == "\n" ? [] : Array(axValue.utf16)
     let caret = Array(caretText.utf16)
     let newline = UInt16(0x0A)
     var units: [UInt16] = []
@@ -48,6 +49,8 @@ public struct FieldTextMap: Sendable {
     caretForOffset = carets + [caretIndex]
   }
 
+  public var caretLength: Int { caretForOffset.last ?? 0 }
+
   public func caret(forOffset offset: Int) -> Int {
     caretForOffset[max(0, min(offset, caretForOffset.count - 1))]
   }
@@ -55,6 +58,17 @@ public struct FieldTextMap: Sendable {
   /// A line's end and the next line's start share a caret position; this picks the next line's start.
   public func offset(forCaret caret: Int) -> Int {
     caretForOffset.lastIndex { $0 <= caret } ?? 0
+  }
+
+  /// True at a line's end whose caret position is the same as the next line's start.
+  public func sharesCaretWithNextLine(_ offset: Int) -> Bool {
+    guard offset >= 0, offset + 1 < caretForOffset.count else { return false }
+    return (text as NSString).character(at: offset) == 0x0A && caretForOffset[offset] == caretForOffset[offset + 1]
+  }
+
+  /// The end of the previous line, when `offset` is a line start that shares its caret with it.
+  public func lineEnd(sharingCaretWith offset: Int) -> Int? {
+    sharesCaretWithNextLine(offset - 1) ? offset - 1 : nil
   }
 
   public func range(forCaretRange range: NSRange) -> NSRange {

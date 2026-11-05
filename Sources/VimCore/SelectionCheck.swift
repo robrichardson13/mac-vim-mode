@@ -21,3 +21,15 @@ public func selectionCovers(_ selected: String, expected: String) -> Bool {
   }
   return remaining.isEmpty
 }
+
+/// True when an edit reached the field. A new blank line doesn't change AXValue, only the caret
+/// text, so collapsed text alone would also match an edit that never landed.
+public func editLanded(in map: FieldTextMap, expecting target: String, caretLengthBefore: Int) -> Bool {
+  if map.text == target { return true }
+  guard target.contains("\n\n"), map.caretLength != caretLengthBefore else { return false }
+  return map.text == collapsingBlankLines(target)
+}
+
+private func collapsingBlankLines(_ text: String) -> String {
+  text.replacingOccurrences(of: "\n+", with: "\n", options: .regularExpression)
+}

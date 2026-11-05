@@ -43,6 +43,8 @@ public struct VimEngine: Sendable {
 
   public mutating func handle(key: String, control: Bool = false, in snapshot: TextSnapshot) -> VimResult {
     let buffer = VimBuffer(snapshot)
+    // An arrow key from `j` or `k` can leave the real caret past a shorter line's last character.
+    if mode == .normal, snapshot.selection.length == 0 { buffer.clampCursorOntoCharacter() }
     dispatch(key, control: control, buffer)
     return VimResult(effects: buffer.effects, snapshot: buffer.snapshot)
   }
@@ -102,8 +104,8 @@ public struct VimEngine: Sendable {
     case .visual, .visualLine:
       leaveVisual(buffer)
     case .normal:
-      // Slack keeps its own Escape: closing threads, dismissing menus.
-      buffer.record(.passThrough)
+      // Swallowed: in Slack it can leave the conversation, and vim users press it out of habit.
+      break
     }
     resetPending()
   }

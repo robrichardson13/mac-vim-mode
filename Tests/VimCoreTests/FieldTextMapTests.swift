@@ -54,3 +54,24 @@ import Testing
   #expect(map.caret(forOffset: 0) == 0)
   #expect(map.offset(forCaret: 0) == 0)
 }
+
+@Test func anEmptiedFieldReportedAsALoneNewlineIsEmpty() {
+  #expect(FieldTextMap(axValue: "\n", caretText: "\n").text == "")
+  #expect(FieldTextMap(axValue: "\n", caretText: "").text == "")
+}
+
+@Test func aLineEndSharesItsCaretWithTheNextLineStart() {
+  let map = FieldTextMap(axValue: "one\ntwo", caretText: "onetwo")
+  #expect(map.sharesCaretWithNextLine(3))
+  #expect(!map.sharesCaretWithNextLine(2))
+  #expect(!map.sharesCaretWithNextLine(7))
+  #expect(map.lineEnd(sharingCaretWith: 4) == 3)
+  #expect(map.lineEnd(sharingCaretWith: 3) == nil)
+  #expect(map.lineEnd(sharingCaretWith: 0) == nil)
+}
+
+@Test func aBlankLineHasItsOwnCaretSoItSharesNothing() {
+  let map = FieldTextMap(axValue: "a\n\nb", caretText: "a\nb")
+  #expect(map.text == "a\nb")
+  #expect(!map.sharesCaretWithNextLine(1))
+}

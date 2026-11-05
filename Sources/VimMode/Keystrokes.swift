@@ -6,6 +6,7 @@ enum Keystrokes {
     case z = 6
     case returnKey = 36
     case delete = 51
+    case rightArrow = 124
     case downArrow = 125
     case upArrow = 126
   }
@@ -32,8 +33,18 @@ enum Keystrokes {
   }
 
   /// Hands a captured key to the app unchanged, because it turned out not to be ours.
+  // Builds a new event: a copy of a tapped event reaches the tap with its original user data even
+  // after re-tagging, so the tap would capture it again, forever.
   static func repost(_ event: CGEvent) {
-    send(event)
+    let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
+    guard let fresh = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true) else { return }
+    var length = 0
+    var units = [UniChar](repeating: 0, count: 4)
+    event.keyboardGetUnicodeString(maxStringLength: units.count, actualStringLength: &length, unicodeString: &units)
+    fresh.keyboardSetUnicodeString(stringLength: length, unicodeString: units)
+    fresh.flags = event.flags
+    fresh.setIntegerValueField(.keyboardEventAutorepeat, value: event.getIntegerValueField(.keyboardEventAutorepeat))
+    send(fresh)
   }
 
   private static func send(_ event: CGEvent) {

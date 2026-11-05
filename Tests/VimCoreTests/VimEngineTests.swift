@@ -44,10 +44,10 @@ private struct Field {
   #expect(field.text == "hello")
 }
 
-@Test func escapeInNormalModePassesThroughToTheApp() {
+@Test func escapeInNormalModeStaysInVimMode() {
   var field = Field("stable", at: 0)
   field.press(VimEngine.escape)
-  #expect(field.lastEffects == [.passThrough])
+  #expect(field.lastEffects == [])
   #expect(field.engine.mode == .normal)
 }
 
@@ -300,4 +300,11 @@ private struct Field {
   var field = Field("alpha beta gamma", at: 0)
   field.type("wwb")
   #expect(field.lastEffects == [.setSelection(NSRange(location: 6, length: 0))])
+}
+
+@Test func normalModeActsOnTheLastCharacterWhenAnArrowLeftTheCaretPastIt() {
+  var field = Field("ab\nzz", at: 0)
+  field.snapshot.selection = NSRange(location: 2, length: 0)
+  field.press("x")
+  #expect(field.text == "a\nzz")
 }

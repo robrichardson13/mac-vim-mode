@@ -55,7 +55,11 @@ struct FocusedTextField {
 
   var snapshot: TextSnapshot? {
     guard let textMap, let caretSelection else { return nil }
-    return TextSnapshot(text: textMap.text, selection: textMap.range(forCaretRange: caretSelection))
+    var selection = textMap.range(forCaretRange: caretSelection)
+    if selection.length == 0, isCaretPastLineStart, let lineEnd = textMap.lineEnd(sharingCaretWith: selection.location) {
+      selection.location = lineEnd
+    }
+    return TextSnapshot(text: textMap.text, selection: selection)
   }
 
   func setCaretSelection(_ range: NSRange) {

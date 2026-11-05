@@ -32,3 +32,21 @@ import Testing
   #expect(selectionCovers("onetwo", expected: "one\ntwo"))
   #expect(selectionCovers("one\ntwo", expected: "onetwo"))
 }
+
+// Captured from Slack: inserting a break at the end of "one" leaves AXValue unchanged.
+private let beforeBreak = FieldTextMap(axValue: "one\ntwo", caretText: "onetwo")
+private let afterBreak = FieldTextMap(axValue: "one\ntwo", caretText: "one\ntwo")
+
+@Test func aNewBlankLineCountsOnceTheCaretTextChanged() {
+  #expect(editLanded(in: afterBreak, expecting: "one\n\ntwo", caretLengthBefore: beforeBreak.caretLength))
+}
+
+@Test func aBlankLineThatNeverLandedDoesNotCount() {
+  #expect(!editLanded(in: beforeBreak, expecting: "one\n\ntwo", caretLengthBefore: beforeBreak.caretLength))
+}
+
+@Test func anOrdinaryEditMustMatchExactly() {
+  let map = FieldTextMap(axValue: "ontwo", caretText: "ontwo")
+  #expect(!editLanded(in: map, expecting: "on\ntwo", caretLengthBefore: 6))
+  #expect(editLanded(in: map, expecting: "ontwo", caretLengthBefore: 6))
+}
