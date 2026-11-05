@@ -14,4 +14,4 @@ Press Escape in a text field of an opted-in app for normal mode. The menu bar sh
 
 `probes/ax-probe.swift` checks what an app's focused text field actually supports.
 
-`VimVerify` runs scripted keys in the Slack self-DM, or a new untitled TextEdit document, and checks the field by re-reading it.
+`VimVerify` is a dev tool that posts real keystrokes. It types in your Slack self-DM, or a new untitled TextEdit document, and checks the field by re-reading it. For Slack, set `VIM_VERIFY_SLACK_TITLE` to the self-DM's exact window title (`you (DM) - Workspace - Slack`); the driver refuses to run without it, and stops before any key if the focused window's title differs.

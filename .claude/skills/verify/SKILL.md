@@ -18,7 +18,7 @@ Exit codes: 0 all passed, 1 a scenario failed, 2 aborted by a safety check.
 
 A run takes Slack's focus for about a minute. Ask Rob first, unless he has said he's away from the machine. Tell him to quit any running `vim-mode`, because the driver starts its own, and that wipes `/tmp/vim-mode.log`.
 
-The self-DM must already be open, with its message box focused and empty.
+The self-DM must already be open, with its message box focused and empty. `VIM_VERIFY_SLACK_TITLE` must hold its exact window title; the driver refuses to start without it. Never set it to any other conversation's title.
 
 ## TextEdit
 
