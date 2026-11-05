@@ -100,7 +100,7 @@ public struct VimEngine: Sendable {
     switch mode {
     case .insert:
       mode = .normal
-      buffer.clampCursorOntoCharacter()
+      stepLeftOutOfInsert(buffer)
     case .visual, .visualLine:
       leaveVisual(buffer)
     case .normal:
@@ -108,6 +108,15 @@ public struct VimEngine: Sendable {
       break
     }
     resetPending()
+  }
+
+  private func stepLeftOutOfInsert(_ buffer: VimBuffer) {
+    guard buffer.selection.length == 0 else {
+      buffer.clampCursorOntoCharacter()
+      return
+    }
+    let lineStart = buffer.lineRange(at: buffer.cursor).lowerBound
+    buffer.setCursor(max(buffer.previousCharacter(before: buffer.cursor), lineStart))
   }
 
   private mutating func handleAfterG(_ key: String, _ buffer: VimBuffer) {

@@ -11,7 +11,10 @@ private struct Field {
 
   init(_ text: String, at cursor: Int, normal: Bool = true) {
     snapshot = TextSnapshot(text: text, selection: NSRange(location: cursor, length: 0))
-    if normal { press(VimEngine.escape) }
+    guard normal else { return }
+    press(VimEngine.escape)
+    // Escape steps left; tests state the cursor they want in normal mode.
+    snapshot.selection = NSRange(location: cursor, length: 0)
   }
 
   mutating func press(_ key: String, control: Bool = false) {
@@ -35,6 +38,29 @@ private struct Field {
   field.press(VimEngine.escape)
   #expect(field.engine.mode == .normal)
   #expect(field.cursor == 4)
+}
+
+@Test func escapeStepsLeftInTheMiddleOfALine() {
+  var field = Field("one two", at: 3, normal: false)
+  field.press(VimEngine.escape)
+  #expect(field.cursor == 2)
+}
+
+@Test func escapeStaysPutAtALineStart() {
+  var first = Field("one", at: 0, normal: false)
+  first.press(VimEngine.escape)
+  #expect(first.cursor == 0)
+  #expect(first.lastEffects == [])
+
+  var second = Field("one\ntwo", at: 4, normal: false)
+  second.press(VimEngine.escape)
+  #expect(second.cursor == 4)
+}
+
+@Test func escapeStepsOverAWholeEmoji() {
+  var field = Field("a😀", at: 3, normal: false)
+  field.press(VimEngine.escape)
+  #expect(field.cursor == 1)
 }
 
 @Test func insertModePassesKeysThrough() {
