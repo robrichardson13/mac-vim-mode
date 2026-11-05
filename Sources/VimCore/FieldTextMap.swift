@@ -1,8 +1,8 @@
 import Foundation
 
 /// Rebuilds a field's real text for the engine and translates its offsets to caret positions.
-/// Slack's caret positions skip line breaks and emoji, so neither source is enough alone: AXValue
-/// has the line breaks but also shows an emoji as two newlines, and the caret text has neither.
+/// Slack's caret positions skip line breaks and emoji, so the caret text alone can't give lines:
+/// they come from the Accessibility tree, or failing that from AXValue, which shows emoji as newlines.
 public struct FieldTextMap: Sendable {
   public let text: String
   private let caretForOffset: [Int]
@@ -36,7 +36,8 @@ public struct FieldTextMap: Sendable {
         units.append(newline)
         carets.append(caretIndex + offset)
       }
-      // An emoji accounts for two unmatched newlines, so an odd count leaves one real line break.
+      // A guess for when no tree is available: an odd count reads as one real line break. Slack's
+      // real counts vary with an emoji's neighbours, which is why the tree comes first.
       if caretRun == 0, !(valueRun - caretRun).isMultiple(of: 2) {
         units.append(newline)
         carets.append(caretIndex)

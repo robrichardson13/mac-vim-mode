@@ -5,7 +5,7 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 ## Now
 
 - [x] Commit this work.
-- [ ] Rob: restart `swift run vim-mode` and try it on a real keyboard. All Slack testing so far used synthetic key events.
+- [ ] Rob: run `scripts/rebuild.sh`, grant Accessibility, and try it on a real keyboard. All testing so far used synthetic key events.
 - [ ] Rob: say whether it still feels "not perfect", and what doesn't feel right.
 
 ## Failing in `/verify`
@@ -37,11 +37,11 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 
 ## Later
 
-- [ ] Support other apps: run `probes/ax-probe.swift` on each first, because its answers decide how the app gets driven.
-- [ ] Replace the hardcoded Slack bundle ID in `VimSession.supportedBundleIdentifier`.
-- [ ] Decide whether `VimCore` and nib's `ComposerVim.swift` ever share code. They stay separate for now.
+- [ ] Prove more apps: run `probes/ax-probe.swift` on each first, because its answers decide how the app gets driven. Slack and TextEdit are proven; Notes, Safari, Chrome and Messages aren't.
+- [x] Replace the hardcoded Slack bundle ID in `VimSession.supportedBundleIdentifier`.
+- [x] Decide whether `VimCore` and nib's `ComposerVim.swift` ever share code. They stay separate.
 
 ## Housekeeping
 
-- [ ] Push the branch. It has never been pushed.
-- [ ] Update `~/CLAUDE.md`, which is out of date: it says Sequoia and about 390 GB free, but this Mac is on macOS 26.6 with 179 GB free.
+- [ ] Rob: create a remote and push the branch. It has never been pushed, because no GitHub repo exists.
+- [x] Update `~/CLAUDE.md`. It now says Tahoe 26.6 and no longer states free space.

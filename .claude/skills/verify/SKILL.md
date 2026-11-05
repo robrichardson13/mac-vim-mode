@@ -1,6 +1,6 @@
 ---
 name: verify
-description: Test vim-mode against the real Slack message box by running scripted keys and reading the field back. Use after changing Sources/VimMode or Sources/VimCore, to reproduce a reported field bug, or when asked to verify or test in Slack.
+description: Test vim-mode against the real Slack message box, or a new TextEdit document, by running scripted keys and reading the field back. Use after changing Sources/VimMode or Sources/VimCore, to reproduce a reported field bug, or when asked to verify or test in Slack.
 ---
 
 # Verify in real Slack
@@ -36,9 +36,10 @@ The driver opens its own document, gates every key on that window, then closes i
 
 ## Adding a scenario
 
-Add one line to `Sources/VimVerify/Scenarios.swift`. Then confirm it can fail, by running it against the code without the fix.
+Add one line to `Sources/VimVerify/Scenarios.swift`, and mark it `isSlackOnly` if it depends on how Slack misreports an emoji or formats a quote. Then confirm it can fail, by running it against the code without the fix.
 
 - `axValue` is the raw field text: an emoji reads as newlines, an emptied field as `"\n"`, and a blank line doesn't show at all.
+- `caretCoversEmoji` checks the caret's bounds, for what the overlay would draw.
 
 ## After an abort
 

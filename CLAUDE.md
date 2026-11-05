@@ -1,6 +1,6 @@
 # mac-vim-mode
 
-Vim modes for text fields in other Mac apps, driven from outside the app. Slack only so far. Commands and the module layout are in `README.md`.
+Vim modes for text fields in other Mac apps, driven from outside the app. Any app can opt in; only Slack and TextEdit are proven. Commands and the module layout are in `README.md`.
 
 ## Testing
 
@@ -8,7 +8,7 @@ Vim modes for text fields in other Mac apps, driven from outside the app. Slack 
 
 The driver only types in Rob's self-DM, in an empty draft. It checks the window title and focus before every key, never sends plain Return, and stops if he touches the keyboard or mouse. Everywhere else Slack stays read-only from your side: typing into another conversation could reach a real person. To see how a field reports its text, run read-only probes that mask letters, and tell him it's watching.
 
-`vim-verify --textedit` runs the same scenarios in a new untitled TextEdit document the driver opens itself and closes without saving. Never script typing in any other non-Slack document.
+`vim-verify --safety-check` sees the non-empty-draft refusal and the input abort fire. `vim-verify --textedit` runs the same scenarios in a new untitled TextEdit document the driver opens itself and closes without saving. Never script typing in any other non-Slack document.
 
 `/tmp/ax-probe` is built from `probes/ax-probe.swift` with `swiftc`. Run it first on any new app, because its answers decide how that app gets driven.
 
@@ -55,11 +55,16 @@ Other quirks:
 
 ## Known gaps
 
+`/verify` passes every scenario in Slack 4.52.155 and TextEdit. All of them use synthetic key events.
+
 Not covered by a scenario:
 
 - A line holding only an emoji: the one-short step lands on the line above.
 - `x` on the last letter before a trailing emoji leaves the emoji, and so does `D`: a selection stops before it on purpose.
 - Fields that fall back to reconciling text sources still collapse a blank line and can misread adjacent emoji as a line break.
+- Links, bold and real lists in Slack: the tree shape hasn't been measured, because typing `- ` from the driver doesn't start a list.
+- `--screenshots` has never captured an image: Screen Recording isn't granted.
+- The driver's abort has only seen a synthetic key, not a physical key press or mouse click.
 
 Decided limits:
 
@@ -68,4 +73,4 @@ Decided limits:
 
 ## Relationship to nib
 
-`VimCore` began as a port of `ComposerVim.swift` in `~/repos/nib`, which stays separate for now. It deliberately differs by following real vim on `cw` and `de`, and treating an emoji as one character.
+`VimCore` began as a port of `ComposerVim.swift` in `~/repos/nib`. Decided: they stay separate, with no shared code. It deliberately differs by following real vim on `cw` and `de`, and treating an emoji as one character.
