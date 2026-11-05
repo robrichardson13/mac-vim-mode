@@ -7,6 +7,8 @@ struct Scenario {
   let keys: String
   let axValue: String
   var caret: Int?
+  /// Its expectation depends on how Slack misreports an emoji.
+  var isSlackOnly = false
 }
 
 let scenarios = [
@@ -24,8 +26,9 @@ let scenarios = [
   Scenario(name: "line-end-j-to-shorter", seed: "long line\nab\nzz", keys: "<esc>gg$jx", axValue: "long line\na\nzz"),
   Scenario(name: "o", seed: "one", keys: "<esc>oTWO<esc>", axValue: "one\nTWO", caret: 6),
   Scenario(name: "yy-p", seed: "one", keys: "<esc>yyp", axValue: "one\none"),
+  Scenario(name: "yy-p-keeps-case", seed: "Ab Cd", keys: "<esc>yyp", axValue: "Ab Cd\nAb Cd"),
   Scenario(name: "u", seed: "one two", keys: "<esc>0dwu", axValue: "one two"),
   Scenario(name: "visual-delete", seed: "one two", keys: "<esc>0ved", axValue: " two", caret: 0),
-  Scenario(name: "emoji-x-before", seed: "a😀b", keys: "<esc>0x", axValue: "\n\nb"),
-  Scenario(name: "emoji-at-line-end", seed: "a😀\nb", keys: "<esc>", axValue: "a\n\n\nb"),
+  Scenario(name: "emoji-x-before", seed: "a😀b", keys: "<esc>0x", axValue: "\n\nb", isSlackOnly: true),
+  Scenario(name: "emoji-at-line-end", seed: "a😀\nb", keys: "<esc>", axValue: "a\n\n\nb", isSlackOnly: true),
 ]

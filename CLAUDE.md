@@ -8,6 +8,8 @@ Vim modes for text fields in other Mac apps, driven from outside the app. Slack 
 
 The driver only types in Rob's self-DM, in an empty draft. It checks the window title and focus before every key, never sends plain Return, and stops if he touches the keyboard or mouse. Everywhere else Slack stays read-only from your side: typing into another conversation could reach a real person. To see how a field reports its text, run read-only probes that mask letters, and tell him it's watching.
 
+`vim-verify --textedit` runs the same scenarios in a new untitled TextEdit document the driver opens itself and closes without saving. Never script typing in any other non-Slack document.
+
 `/tmp/ax-probe` is built from `probes/ax-probe.swift` with `swiftc`. Run it first on any new app, because its answers decide how that app gets driven.
 
 ## Invariants

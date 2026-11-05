@@ -9,6 +9,7 @@ enum Key {
   case selectAll
   case delete
   case controlA
+  case newDocument
 
   /// `<esc>` is Escape, `<c-a>` is Ctrl-A and a newline is Shift-Return; everything else is typed as itself.
   static func parse(_ text: String) -> [Key] {
@@ -47,6 +48,7 @@ struct Keyboard {
     case .selectAll: post(keyCode: 0, flags: .maskCommand)
     case .delete: post(keyCode: 51)
     case .controlA: post(keyCode: 0, flags: .maskControl)
+    case .newDocument: post(keyCode: 45, flags: .maskCommand)
     }
   }
 

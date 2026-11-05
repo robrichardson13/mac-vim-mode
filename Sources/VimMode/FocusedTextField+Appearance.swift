@@ -26,9 +26,22 @@ extension FocusedTextField {
     return caretBounds.minX - frame.minX > 15
   }
 
-  /// Text markers, because Slack's AXBoundsForRange returns the same empty rectangle for every range.
+  /// Text markers first, because Slack's AXBoundsForRange returns the same empty rectangle for every
+  /// range. Native fields have no markers, and report the caret through AXBoundsForRange.
   var caretBounds: CGRect? {
-    copy("AXSelectedTextMarkerRange").flatMap(bounds(ofMarkerRange:))
+    copy("AXSelectedTextMarkerRange").flatMap(bounds(ofMarkerRange:)) ?? boundsOfSelectedRange
+  }
+
+  private var boundsOfSelectedRange: CGRect? {
+    guard let caretSelection else { return nil }
+    var range = CFRange(location: caretSelection.location, length: caretSelection.length)
+    guard let parameter = AXValueCreate(.cfRange, &range),
+      let value = copy(parameterized: kAXBoundsForRangeParameterizedAttribute, parameter),
+      CFGetTypeID(value) == AXValueGetTypeID()
+    else { return nil }
+    var bounds = CGRect.zero
+    guard AXValueGetValue(value as! AXValue, .cgRect, &bounds), bounds.height > 0 else { return nil }
+    return bounds
   }
 
   /// The width of the character after the caret, which Slack doesn't report directly.
