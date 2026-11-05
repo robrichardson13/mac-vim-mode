@@ -9,7 +9,12 @@ public func readFieldTextMap(of element: AXUIElement) -> FieldTextMap? {
     let axValue = value as? String
   else { return nil }
   let caretText = readFieldText(upperBound: axValue.utf16.count) { caretString(length: $0, of: element) }
-  if let lines = readFieldNode(element).flatMap(fieldLines), let map = FieldTextMap(lines: lines, caretText: caretText) {
+  let tree = readFieldNode(element)
+  if let lines = tree.flatMap(fieldLines), let map = FieldTextMap(lines: lines, caretText: caretText) {
+    return map
+  }
+  // Slack means "emptied" by a lone newline, and has a tree. A field without one means a real newline.
+  if axValue == "\n", tree?.children.isEmpty == true, let map = FieldTextMap(lines: ["", ""], caretText: caretText) {
     return map
   }
   return FieldTextMap(axValue: axValue, caretText: caretText)

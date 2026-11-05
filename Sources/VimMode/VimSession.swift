@@ -54,6 +54,7 @@ final class VimSession {
     // Typing must stay instant, so insert mode only pays for Accessibility calls on Escape.
     if engine.mode == .insert, keyCode != Self.escapeKeyCode { return false }
 
+    let startedAt = Date()
     guard let field = FocusedTextField.current(inProcess: app.processIdentifier), let snapshot = field.snapshot else {
       resetEngine()
       return false
@@ -67,7 +68,6 @@ final class VimSession {
     if isControl, keyCode != Self.rKeyCode { return false }
     guard let key = keyName(for: event, keyCode: keyCode, isControl: isControl) else { return true }
 
-    let startedAt = Date()
     let result = engine.handle(key: key, control: isControl, in: snapshot)
     onModeChange?(engine.mode)
     if result.effects.contains(.passThrough) { return false }

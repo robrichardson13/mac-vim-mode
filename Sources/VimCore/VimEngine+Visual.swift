@@ -51,7 +51,7 @@ extension VimEngine {
   /// Vim's swap: the selection is replaced by the register, and what it replaced becomes the register.
   private mutating func pasteOverSelection(_ buffer: VimBuffer) {
     let range = visualRange(buffer)
-    guard !register.isEmpty, range.length > 0 else { return }
+    guard !register.isEmpty || registerIsLinewise, range.length > 0 else { return }
     let payload = register
     let body = registerIsLinewise && !payload.hasSuffix("\n") ? payload + "\n" : payload
     yank(buffer.substring(range), linewise: mode == .visualLine)

@@ -42,15 +42,26 @@ struct EffectPerformer {
       }
       return replaceSelection(range, with: replacement, expectedText: &expectedText)
     case .moveCaretUp:
-      Keystrokes.post(.upArrow)
+      postAndAwaitChange(.upArrow)
     case .moveCaretDown:
-      Keystrokes.post(.downArrow)
+      postAndAwaitChange(.downArrow)
     case .undo:
-      Keystrokes.post(.z, flags: .maskCommand)
+      postAndAwaitChange(.z, flags: .maskCommand)
     case .redo:
-      Keystrokes.post(.z, flags: [.maskCommand, .maskShift])
+      postAndAwaitChange(.z, flags: [.maskCommand, .maskShift])
     }
     return true
+  }
+
+  /// The next queued key snapshots the field, so `jdd` typed fast would edit the old line if the
+  /// app hadn't applied this yet. No change isn't a failure: `j` on the last line stays put.
+  private func postAndAwaitChange(_ key: Keystrokes.Key, flags: CGEventFlags = []) {
+    let caretBefore = field.caretSelection
+    let lengthBefore = field.axValueLength
+    Keystrokes.post(key, flags: flags)
+    _ = waitUntil(timeout: Self.settleTimeout) {
+      field.caretSelection != caretBefore || field.axValueLength != lengthBefore
+    }
   }
 
   private func replaceSelection(_ range: NSRange, with replacement: String, expectedText: inout String) -> Bool {

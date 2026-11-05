@@ -61,4 +61,7 @@ let scenarios = [
   Scenario(name: "blank-line-jj", seed: "one\n\ntwo", keys: "<esc>ggjjx", axValue: "one\nwo", isSlackOnly: true),
   Scenario(name: "blank-line-dd", seed: "one\n\ntwo", keys: "<esc>ggjddx", axValue: "one\nwo", isSlackOnly: true),
   Scenario(name: "blank-line-caret-isnt-emoji", seed: "one\n\ntwo", keys: "<esc>ggj", axValue: "one\ntwo", caretCoversEmoji: false, isSlackOnly: true),
+  Scenario(name: "two-blank-lines-x", seed: "one\n\n\ntwo", keys: "<esc>x", axValue: "one\n\ntw", isSlackOnly: true),
+  Scenario(name: "dd-above-trailing-blank", seed: "one\ntwo\n", keys: "<esc>kdd", axValue: "one\n"),
+  Scenario(name: "o-in-emptied-field", seed: "a", keys: "<esc>ddo<esc>ddiX", axValue: "X"),
 ]

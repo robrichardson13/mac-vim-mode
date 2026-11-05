@@ -156,7 +156,10 @@ func launchVimMode(optingIn bundleIdentifier: String) throws -> Process {
   for _ in 0..<40 where !VimLog.hasStarted {
     Thread.sleep(forTimeInterval: 0.05)
   }
-  guard VimLog.hasStarted else { throw Abort("vim-mode didn't start") }
+  guard VimLog.hasStarted else {
+    process.terminate()
+    throw Abort("vim-mode didn't start")
+  }
   return process
 }
 

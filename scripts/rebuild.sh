@@ -18,6 +18,12 @@ if [ "$(git rev-parse --git-dir)" = "$(git rev-parse --git-common-dir)" ] && [ -
   feature=""
 fi
 
+# Without a suffix a worktree would take over the main build's name, bundle ID and running app.
+if [ "$(git rev-parse --git-dir)" != "$(git rev-parse --git-common-dir)" ] && [ -z "$feature" ]; then
+  echo "worktree has no .vim-mode-feature: nib's setup hook writes it, or write a suffix there yourself" >&2
+  exit 1
+fi
+
 APP="vim-mode${feature:+-$feature}"
 BUNDLE_ID="io.robrichardson.vim-mode${feature:+.$feature}"
 BUNDLE=".build/app/$APP.app"

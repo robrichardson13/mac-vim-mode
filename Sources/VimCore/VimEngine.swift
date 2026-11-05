@@ -247,7 +247,8 @@ public struct VimEngine: Sendable {
   }
 
   mutating func perform(_ op: Operator, over range: NSRange, linewise: Bool, _ buffer: VimBuffer) {
-    let isDeletingLastLine = linewise && op == .delete && range.location > 0 && NSMaxRange(range) == buffer.length
+    let endsInLineBreak = range.length > 0 && buffer.substring(NSRange(location: NSMaxRange(range) - 1, length: 1)) == "\n"
+    let isDeletingLastLine = linewise && op == .delete && range.location > 0 && NSMaxRange(range) == buffer.length && !endsInLineBreak
     guard range.length > 0 || op == .change || isDeletingLastLine else { return }
     yank(buffer.substring(range), linewise: linewise)
     switch op {
@@ -292,7 +293,7 @@ public struct VimEngine: Sendable {
   }
 
   private func paste(after: Bool, count: Int, _ buffer: VimBuffer) {
-    guard !register.isEmpty else { return }
+    guard !register.isEmpty || registerIsLinewise else { return }
     let payload = String(repeating: register, count: count)
     let cursor = buffer.cursor
     if registerIsLinewise {

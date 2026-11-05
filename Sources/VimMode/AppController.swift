@@ -20,7 +20,11 @@ final class AppController: NSObject {
   func start() {
     installStatusMenu()
     showInactive()
-    session.onModeChange = { [weak self] mode in self?.show(mode) }
+    session.onModeChange = { [weak self] mode in
+      // Changing the opt-ins resets the engine even while no tap is running.
+      guard let self, self.state.isActive else { return }
+      self.show(mode)
+    }
     KeyboardTap.shared.session = session
     state.onOptInsChange = { [weak self] in
       self?.session.resetEngine()

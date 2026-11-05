@@ -18,25 +18,36 @@ struct TextEditDocument: TypingTarget {
       focusedAppBundleIdentifier() == bundleIdentifier && textEditProcessIdentifier() != nil
     }
     let field = AppField(processIdentifier: textEditProcessIdentifier()!)
+    if !wasRunning { try waitForWindowsToSettle(field) }
     let windowsBefore = field.windows
     let frontmostOnly = Keyboard(beforeEachKey: {
       guard focusedAppBundleIdentifier() == bundleIdentifier else { throw Abort("TextEdit isn't frontmost") }
     })
     try frontmostOnly.press([.newDocument])
-    var newWindow: AXUIElement?
+    var newWindows: [AXUIElement] = []
     try waitFor("the new TextEdit document") {
-      newWindow = field.windows.first { window in !windowsBefore.contains { CFEqual($0, window) } }
-      return newWindow != nil
+      newWindows = field.windows.filter { window in !windowsBefore.contains { CFEqual($0, window) } }
+      return !newWindows.isEmpty
     }
-    let document = TextEditDocument(field: field, window: newWindow!, launchedTextEdit: !wasRunning)
-    do {
-      try waitFor("the new document to take focus") { (try? document.confirmFocused()) != nil }
-      guard field.isEmpty else { throw Abort("the new TextEdit document isn't empty") }
-    } catch {
-      document.close()
-      throw error
-    }
+    guard newWindows.count == 1 else { throw Abort("more than one new TextEdit window appeared; closing none") }
+    let document = TextEditDocument(field: field, window: newWindows[0], launchedTextEdit: !wasRunning)
+    // Never close on these failures: the window may be Rob's restored document, and closing presses Delete.
+    try waitFor("the new document to take focus") { (try? document.confirmFocused()) != nil }
+    guard field.isEmpty else { throw Abort("the new TextEdit document isn't empty") }
     return document
+  }
+
+  /// A launching TextEdit restores Rob's documents after it comes to the front. Any window that
+  /// arrives after the driver's snapshot would pass for the driver's own.
+  private static func waitForWindowsToSettle(_ field: AppField) throws {
+    var count = field.windows.count
+    var stablePolls = 0
+    try waitFor("TextEdit's windows to settle") {
+      let current = field.windows.count
+      stablePolls = current == count ? stablePolls + 1 : 0
+      count = current
+      return stablePolls >= 40
+    }
   }
 
   func confirmFocused() throws {

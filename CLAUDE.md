@@ -49,7 +49,7 @@ Other quirks:
 - A caret on a last blank line reads as the position before that line's newline in `AXStringForRange`.
 - A real → from one short of a line end stops before a trailing emoji; ⌘→ passes it.
 - Inline code is an `AXGroup` inside its line, with subrole `AXCodeStyleGroup`.
-- A new blank line leaves `AXValue` unchanged and only adds a newline to `AXStringForRange`. An emptied field reads `"\n"` from both.
+- One blank line leaves `AXValue` unchanged and only adds a newline to `AXStringForRange`; each further one adds a newline to both, so `one\n\n\ntwo` reads `"one\n\ntwo"`. An emptied field reads `"\n"` from both.
 - The system-wide `AXFocusedApplication` returns -25204, and `NSWorkspace.frontmostApplication` goes stale with no run loop. `lsappinfo` reports the frontmost app correctly.
 - Caret bounds have zero width in text, about square on an emoji, and the full line width on an empty line.
 

@@ -229,6 +229,22 @@ private struct Field {
   #expect(field.text == "first\nthird")
 }
 
+@Test func ddAboveATrailingBlankLineKeepsThatBlankLine() {
+  var field = Field("one\ntwo\n", at: 4)
+  field.type("dd")
+  #expect(field.text == "one\n")
+}
+
+@Test func ddOnATrailingBlankLineYanksABlankLineThatPastes() {
+  var field = Field("one\n", at: 0)
+  field.type("yy")
+  field.snapshot.selection = NSRange(location: 4, length: 0)
+  field.type("dd")
+  #expect(field.text == "one")
+  field.type("p")
+  #expect(field.text == "one\n")
+}
+
 @Test func ddOnTheLastLineTakesTheLineBreakBeforeIt() {
   var field = Field("one\n  two", at: 6)
   field.type("dd")
