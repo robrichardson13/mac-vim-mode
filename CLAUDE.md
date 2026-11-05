@@ -60,7 +60,11 @@ Not covered by a scenario:
 - A line holding only an emoji: the one-short step lands on the line above.
 - `x` on the last letter before a trailing emoji leaves the emoji, and so does `D`: a selection stops before it on purpose.
 - Fields that fall back to reconciling text sources still collapse a blank line and can misread adjacent emoji as a line break.
-- Visual mode's `j` and `k` move by real lines, so they can't step through a wrapped line.
+
+Decided limits:
+
+- Visual mode's `j` and `k` move by real lines, as real vim's do. Normal mode's move by rows only because they're arrow keys: only the app knows where a line wraps.
+- Escape never reaches the app from normal mode, and Escape from insert mode only enters normal mode, so it can't close a thread or dismiss an open menu. Rob hasn't said yet whether this gets in the way.
 
 ## Relationship to nib
 

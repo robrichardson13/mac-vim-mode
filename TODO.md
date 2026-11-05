@@ -24,8 +24,9 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 
 ## Known limits
 
-- [ ] Visual mode's `j` and `k` move by real lines, so they can't step through a wrapped line.
-- [ ] Escape in normal mode no longer reaches Slack, so it can't close a thread or dismiss a menu. Check whether that gets in the way.
+- [x] Visual mode's `j` and `k` move by real lines, so they can't step through a wrapped line. Kept: real vim's `j` and `k` do the same.
+- [x] Escape in normal mode no longer reaches Slack, so it can't close a thread or dismiss a menu. Kept, because reaching Slack can leave the conversation.
+- [ ] Rob: say whether swallowed Escape gets in the way, including an open `:emoji` menu in insert mode.
 
 ## Verification loop
 
