@@ -10,9 +10,9 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 
 ## Failing in `/verify`
 
-- [ ] `cw`: make Escape step the caret left everywhere, like real vim, not only at a line end.
-- [ ] `emoji-at-line-end`: an emoji plus a line break reads as two newlines, not the three `FieldTextMap` assumes. Find a way to tell it from an emoji with no break, then correct `anEmojiAtALineEndKeepsTheLineBreak`, whose input is assumed.
-- [ ] `emoji-x-before`: `x` before a leading emoji leaves `AXValue` as `"\nb"` and the edit check fails. Find out whether the emoji survived.
+- [x] `cw`: make Escape step the caret left everywhere, like real vim, not only at a line end.
+- [x] `emoji-at-line-end`: an emoji plus a line break reads as two newlines, not the three `FieldTextMap` assumes. Find a way to tell it from an emoji with no break, then correct `anEmojiAtALineEndKeepsTheLineBreak`, whose input is assumed.
+- [x] `emoji-x-before`: `x` before a leading emoji leaves `AXValue` as `"\nb"` and the edit check fails. The emoji survives: the tree still holds its `AXImage`.
 
 ## Suspected, needs a scenario
 

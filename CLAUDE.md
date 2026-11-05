@@ -32,11 +32,11 @@ Measured on Slack 4.52.155 (Electron 44), after setting `AXManualAccessibility`.
 | Edit | Real key events after selecting | Setting `AXSelectedText` (returns success, changes nothing), `AXReplaceRangeWithText` (-25212) |
 | Caret and selection | Reading and setting `AXSelectedTextRange` | |
 | Caret position on screen | `AXBoundsForTextMarkerRange` on `AXSelectedTextMarkerRange` | `AXBoundsForRange` (constant `0,982,0x0`) |
-| Lines | Rebuilding from both text sources (`FieldTextMap`) | `AXLineForIndex`, `AXRangeForLine` (changed only at blank lines) |
+| Lines | The field's Accessibility tree (`fieldLines`), checked against `AXStringForRange` | `AXLineForIndex`, `AXRangeForLine` (changed only at blank lines) |
 
-Two text sources disagree, and `FieldTextMap` reconciles them:
+The tree is the only source that tells lines apart. Each line is an `AXGroup` of `AXStaticText` and `AXImage` (an emoji); a blank line is an `AXEmptyGroup`. A field with no children, as in TextEdit, or lines that don't match the caret text, falls back to reconciling the two text sources:
 
-- `AXValue` has line breaks, but shows an emoji as two newlines. It also shows a blank line as one newline.
+- `AXValue` has line breaks, but an emoji reads as newlines whose count depends on its neighbours: `a😀b` and `a😀\nb` both read `"a\n\nb"`, `😀b` reads `"\nb"`, `a😀` reads `"a\n"`, `a😀😀b` reads `"a\n\n\nb"`. A blank line reads as one newline.
 - `AXStringForRange` matches caret positions. It omits line breaks and emoji, but keeps a newline for a blank line. Asking past its end returns nothing, so `AXValue`'s length is only an upper bound.
 
 Other quirks:
@@ -51,12 +51,6 @@ Other quirks:
 - Caret bounds have zero width in text, about square on an emoji, and the full line width on an empty line.
 
 ## Known gaps
-
-`/verify` fails these three scenarios in Slack 4.52.155:
-
-- `cw`: Escape only steps the caret back at a line end. Real vim always steps left.
-- `emoji-at-line-end`: an emoji with a line break after it reads as two newlines, not the three `FieldTextMap` assumes, so it can look like an emoji with no break.
-- `emoji-x-before`: deleting a character before a leading emoji leaves `AXValue` as `"\nb"` and the edit check fails. Whether the emoji survived is unknown.
 
 Not covered by a scenario:
 

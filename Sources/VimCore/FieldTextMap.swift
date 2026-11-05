@@ -49,6 +49,41 @@ public struct FieldTextMap: Sendable {
     caretForOffset = carets + [caretIndex]
   }
 
+  /// Nil unless the lines account for every caret position, so a tree that doesn't match falls back
+  /// to the two-source reconcile.
+  public init?(lines: [String], caretText: String) {
+    let caret = Array(caretText.utf16)
+    let newline = UInt16(0x0A)
+    // How Slack reports an emptied field, or one holding only an emoji.
+    if lines == [""] {
+      guard caret.allSatisfy({ $0 == newline }), caret.count <= 1 else { return nil }
+      text = ""
+      caretForOffset = [0]
+      return
+    }
+    var units: [UInt16] = []
+    var carets: [Int] = []
+    var caretIndex = 0
+    for (lineIndex, line) in lines.enumerated() {
+      let isLast = lineIndex == lines.count - 1
+      for unit in line.utf16 {
+        guard caretIndex < caret.count, caret[caretIndex] == unit else { return nil }
+        units.append(unit)
+        carets.append(caretIndex)
+        caretIndex += 1
+      }
+      if !isLast {
+        units.append(newline)
+        carets.append(caretIndex)
+      }
+      // Only a blank line takes a caret position of its own.
+      if line.isEmpty, caretIndex < caret.count, caret[caretIndex] == newline { caretIndex += 1 }
+    }
+    guard caretIndex == caret.count else { return nil }
+    text = String(utf16CodeUnits: units, count: units.count)
+    caretForOffset = carets + [caretIndex]
+  }
+
   public var caretLength: Int { caretForOffset.last ?? 0 }
 
   public func caret(forOffset offset: Int) -> Int {

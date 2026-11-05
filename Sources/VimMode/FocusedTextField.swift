@@ -33,9 +33,7 @@ struct FocusedTextField {
   }
 
   var textMap: FieldTextMap? {
-    guard let value = copy(kAXValueAttribute) as? String else { return nil }
-    let caretText = readFieldText(upperBound: value.utf16.count) { string(in: NSRange(location: 0, length: $0)) }
-    return FieldTextMap(axValue: value, caretText: caretText)
+    readFieldTextMap(of: element)
   }
 
   var axValueLength: Int {
@@ -66,17 +64,6 @@ struct FocusedTextField {
     var cfRange = CFRange(location: range.location, length: range.length)
     guard let value = AXValueCreate(.cfRange, &cfRange) else { return }
     AXUIElementSetAttributeValue(element, kAXSelectedTextRangeAttribute as CFString, value)
-  }
-
-  private func string(in range: NSRange) -> String? {
-    var cfRange = CFRange(location: range.location, length: range.length)
-    guard let parameter = AXValueCreate(.cfRange, &cfRange) else { return nil }
-    var value: CFTypeRef?
-    guard
-      AXUIElementCopyParameterizedAttributeValue(
-        element, kAXStringForRangeParameterizedAttribute as CFString, parameter, &value) == .success
-    else { return nil }
-    return value as? String
   }
 
   func copy(_ attribute: String) -> CFTypeRef? {

@@ -1,5 +1,5 @@
 /// `axValue` is the raw field text, so a bug in FieldTextMap can't hide itself: an emoji reads as
-/// two newlines there, and an emptied field as one. `caret` is an engine offset, left nil where only
+/// newlines there (see CLAUDE.md), and an emptied field as one. `caret` is an engine offset, left nil where only
 /// the text matters.
 struct Scenario {
   let name: String
@@ -29,6 +29,7 @@ let scenarios = [
   Scenario(name: "yy-p-keeps-case", seed: "Ab Cd", keys: "<esc>yyp", axValue: "Ab Cd\nAb Cd"),
   Scenario(name: "u", seed: "one two", keys: "<esc>0dwu", axValue: "one two"),
   Scenario(name: "visual-delete", seed: "one two", keys: "<esc>0ved", axValue: " two", caret: 0),
-  Scenario(name: "emoji-x-before", seed: "a😀b", keys: "<esc>0x", axValue: "\n\nb", isSlackOnly: true),
-  Scenario(name: "emoji-at-line-end", seed: "a😀\nb", keys: "<esc>", axValue: "a\n\n\nb", isSlackOnly: true),
+  Scenario(name: "emoji-x-before", seed: "a😀b", keys: "<esc>0x", axValue: "\nb", caret: 0, isSlackOnly: true),
+  // `yy` takes only b's line if the break after the emoji was seen, and "ab" if it wasn't.
+  Scenario(name: "emoji-at-line-end", seed: "a😀\nb", keys: "<esc>yyp", axValue: "a\n\nb\nb", isSlackOnly: true),
 ]

@@ -43,9 +43,36 @@ import Testing
 }
 
 // Assumed, not captured: an emoji at a line end with no blank line after it.
-@Test func anEmojiAtALineEndKeepsTheLineBreak() {
-  let map = FieldTextMap(axValue: "one\n\n\ntwo", caretText: "onetwo")
-  #expect(map.text == "one\ntwo")
+@Test func axValueAloneCantTellAnEmojiAtALineEndFromOneMidLine() {
+  // Measured: "a😀\nb" and "a😀b" read the same from both sources; only the tree differs.
+  #expect(FieldTextMap(axValue: "a\n\nb", caretText: "ab").text == "ab")
+}
+
+@Test func linesRestoreALineBreakAfterAnEmoji() {
+  let map = FieldTextMap(lines: ["a", "b"], caretText: "ab")
+  #expect(map?.text == "a\nb")
+  #expect(map?.caret(forOffset: 2) == 1)
+  #expect(map?.sharesCaretWithNextLine(1) == true)
+}
+
+@Test func linesKeepABlankLine() {
+  let map = FieldTextMap(lines: ["a", "", "b"], caretText: "a\nb")
+  #expect(map?.text == "a\n\nb")
+  #expect(map?.caret(forOffset: 1) == 1)
+  #expect(map?.caret(forOffset: 2) == 1)
+  #expect(map?.caret(forOffset: 3) == 2)
+  #expect(map?.caretLength == 3)
+}
+
+@Test func linesThatDontMatchTheCaretTextAreRejected() {
+  #expect(FieldTextMap(lines: ["1. a"], caretText: "a") == nil)
+  #expect(FieldTextMap(lines: ["a"], caretText: "ab") == nil)
+}
+
+@Test func aSingleBlankLineIsAnEmptyField() {
+  let map = FieldTextMap(lines: [""], caretText: "\n")
+  #expect(map?.text == "")
+  #expect(map?.caret(forOffset: 0) == 0)
 }
 
 @Test func anEmptyFieldHasOneCaretPosition() {

@@ -18,9 +18,9 @@ struct AppField {
   /// In the engine's offsets, so scenarios state carets in the text they typed.
   var selection: NSRange {
     let element = focusedElement
-    let value = axValue
-    let caretText = readFieldText(upperBound: value.utf16.count) { Self.string(in: $0, of: element) }
-    return FieldTextMap(axValue: value, caretText: caretText).range(forCaretRange: Self.caretRange(of: element))
+    let caretRange = Self.caretRange(of: element)
+    guard let element, let map = readFieldTextMap(of: element) else { return caretRange }
+    return map.range(forCaretRange: caretRange)
   }
 
   var isFocusedElementATextArea: Bool {
@@ -58,18 +58,6 @@ struct AppField {
     var range = CFRange()
     AXValueGetValue(value as! AXValue, .cfRange, &range)
     return NSRange(location: range.location, length: range.length)
-  }
-
-  private static func string(in length: Int, of element: AXUIElement?) -> String? {
-    guard let element else { return nil }
-    var range = CFRange(location: 0, length: length)
-    guard let parameter = AXValueCreate(.cfRange, &range) else { return nil }
-    var value: CFTypeRef?
-    guard
-      AXUIElementCopyParameterizedAttributeValue(
-        element, kAXStringForRangeParameterizedAttribute as CFString, parameter, &value) == .success
-    else { return nil }
-    return value as? String
   }
 }
 
