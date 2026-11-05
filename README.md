@@ -5,6 +5,7 @@ Vim modes for text fields in other Mac apps. Currently Slack only.
     swift test          # engine tests, no Slack needed
     swift run vim-mode  # needs Accessibility for the app running it
     swift build && .build/debug/vim-verify  # real-Slack scenarios; see .claude/skills/verify
+    scripts/rebuild.sh  # build and relaunch vim-mode[-<feature>].app; --no-launch to only build
 
 Press Escape in a Slack message box for normal mode. The menu bar shows the mode. Press Ctrl-C in the terminal to quit.
 

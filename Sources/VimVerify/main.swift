@@ -92,7 +92,8 @@ func open(bundleIdentifier: String?) {
 }
 
 func isVimModeRunning() -> Bool {
-  runTool("/usr/bin/pgrep", ["-x", "vim-mode"]) == 0
+  // Any build counts, not just this checkout's: a second tap in Slack fights the driver's.
+  runTool("/usr/bin/pgrep", ["^vim-mode(-|$)"]) == 0
 }
 
 func runTool(_ path: String, _ arguments: [String]) -> Int32 {

@@ -2,6 +2,7 @@ import Foundation
 
 /// vim-mode's log: the only place its failed edit checks are visible from outside.
 enum VimLog {
+  // Named for the sibling debug binary the driver launches, never a suffixed app bundle.
   static let path = "/tmp/vim-mode.log"
   // Longer than EffectPerformer.editTimeout, so a failing edit has finished before anyone reads the result.
   private static let quietSeconds = 0.7
