@@ -5,21 +5,39 @@ import VimCore
 /// Owns the app's lifetime: launching means active, as soon as Accessibility allows it.
 @MainActor
 final class AppController: NSObject {
-  private let state = AppState()
-  private let session = VimSession()
+  private let state: AppState
+  private let session: VimSession
   private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
   private let statusLine = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-  private lazy var settingsWindow = SettingsWindow(state: state)
+  private var settingsWindow: SettingsWindow?
   private var grantTimer: Timer?
+
+  override init() {
+    state = AppState()
+    session = VimSession(state: state)
+  }
 
   func start() {
     installStatusMenu()
     showInactive()
     session.onModeChange = { [weak self] mode in self?.show(mode) }
     KeyboardTap.shared.session = session
+    state.onOptInsChange = { [weak self] in
+      self?.session.resetEngine()
+      self?.followFrontmostApp()
+    }
+    followFrontmostApp()
+    NSWorkspace.shared.notificationCenter.addObserver(
+      forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated {
+        if self?.settingsWindow?.isVisible == true { self?.state.refreshAppsToAdd() }
+        self?.followFrontmostApp()
+      }
+    }
     if startVimIfAllowed() { return }
     // Not activating: this also runs when an agent rebuilds, and must not take focus.
-    settingsWindow.show(activating: false)
+    showSettings(activating: false)
     grantTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
       MainActor.assumeIsolated { self?.retryAfterGrant() }
     }
@@ -38,7 +56,14 @@ final class AppController: NSObject {
   }
 
   @objc private func openSettings() {
-    settingsWindow.show(activating: true)
+    showSettings(activating: true)
+  }
+
+  private func showSettings(activating: Bool) {
+    state.refreshAppsToAdd()
+    let window = settingsWindow ?? SettingsWindow(state: state)
+    settingsWindow = window
+    window.show(activating: activating)
   }
 
   private func retryAfterGrant() {
@@ -50,20 +75,16 @@ final class AppController: NSObject {
   private func startVimIfAllowed() -> Bool {
     guard AXIsProcessTrusted(), KeyboardTap.shared.start() else { return false }
     session.startOverlayUpdates()
-    VimSession.enableElectronAccessibility()
-    KeyboardTap.shared.setSupportedAppFrontmost(VimSession.isSupportedAppFrontmost)
-    NSWorkspace.shared.notificationCenter.addObserver(
-      forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main
-    ) { _ in
-      MainActor.assumeIsolated {
-        VimSession.enableElectronAccessibility()
-        KeyboardTap.shared.setSupportedAppFrontmost(VimSession.isSupportedAppFrontmost)
-      }
-    }
+    followFrontmostApp()
     state.isActive = true
     show(.insert)
-    Log.write("Running. Press Escape in a text field of a supported app for normal mode.")
+    Log.write("Running. Press Escape in a text field of an opted-in app for normal mode.")
     return true
+  }
+
+  private func followFrontmostApp() {
+    session.enableElectronAccessibility()
+    KeyboardTap.shared.setOptedInAppFrontmost(session.isOptedInAppFrontmost)
   }
 
   private func showInactive() {

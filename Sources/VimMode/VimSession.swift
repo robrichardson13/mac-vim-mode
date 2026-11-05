@@ -1,21 +1,25 @@
 import AppKit
 import VimCore
 
-/// Decides what happens to each key pressed in a supported app.
+/// Decides what happens to each key pressed in an opted-in app.
 @MainActor
 final class VimSession {
-  static let supportedBundleIdentifier = "com.tinyspeck.slackmacgap"
   private static let escapeKeyCode: Int64 = 53
   private static let deleteKeyCode: Int64 = 51
   private static let rKeyCode: Int64 = 15
 
   var onModeChange: ((VimEngine.Mode) -> Void)?
 
+  private let state: AppState
   private var engine = VimEngine()
   private var currentField: FocusedTextField?
   private let overlay = ModeOverlay()
   private var overlayStyle: FieldTextStyle?
   private var overlayTimer: Timer?
+
+  init(state: AppState) {
+    self.state = state
+  }
 
   /// Polling, because nothing reports the scrolls and window moves the overlay has to follow.
   /// It only reads anything outside insert mode, so typing never pays for it.
@@ -25,15 +29,17 @@ final class VimSession {
     }
   }
 
-  static var isSupportedAppFrontmost: Bool {
-    NSWorkspace.shared.frontmostApplication?.bundleIdentifier == supportedBundleIdentifier
+  var isOptedInAppFrontmost: Bool {
+    state.optIns.contains(NSWorkspace.shared.frontmostApplication?.bundleIdentifier)
   }
 
   // Chromium builds its accessibility tree lazily; this is Electron's documented opt-in.
-  static func enableElectronAccessibility() {
-    for app in NSRunningApplication.runningApplications(withBundleIdentifier: supportedBundleIdentifier) {
-      let element = AXUIElementCreateApplication(app.processIdentifier)
-      AXUIElementSetAttributeValue(element, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+  func enableElectronAccessibility() {
+    for bundleIdentifier in state.optIns.bundleIdentifiers {
+      for app in NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier) {
+        let element = AXUIElementCreateApplication(app.processIdentifier)
+        AXUIElementSetAttributeValue(element, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+      }
     }
   }
 
@@ -41,9 +47,7 @@ final class VimSession {
 
   /// Returns true when the key was handled and must not reach the app.
   func handleKeyDown(_ event: CGEvent) -> Bool {
-    guard let app = NSWorkspace.shared.frontmostApplication,
-      app.bundleIdentifier == Self.supportedBundleIdentifier
-    else { return false }
+    guard isOptedInAppFrontmost, let app = NSWorkspace.shared.frontmostApplication else { return false }
 
     let flags = event.flags
     let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
@@ -78,8 +82,8 @@ final class VimSession {
 
   private func refreshOverlay() {
     guard engine.mode != .insert,
+      isOptedInAppFrontmost,
       let app = NSWorkspace.shared.frontmostApplication,
-      app.bundleIdentifier == Self.supportedBundleIdentifier,
       let field = FocusedTextField.current(inProcess: app.processIdentifier),
       field.isSameField(as: currentField),
       let frame = field.frame,
@@ -119,7 +123,7 @@ final class VimSession {
     return character == "\n" ? nil : character
   }
 
-  private func resetEngine() {
+  func resetEngine() {
     engine.resetToInsert()
     onModeChange?(engine.mode)
     overlayStyle = nil

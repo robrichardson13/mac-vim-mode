@@ -12,6 +12,8 @@ final class SettingsWindow {
     window.isReleasedWhenClosed = false
   }
 
+  var isVisible: Bool { window.isVisible }
+
   func show(activating: Bool) {
     if activating { NSApp.activate() }
     window.center()
@@ -28,10 +30,59 @@ private struct SettingsView: View {
       Section("Accessibility") {
         AccessibilityStatus(isActive: state.isActive)
       }
+      Section("Apps") {
+        ForEach(state.optIns.bundleIdentifiers.map(AppChoice.init)) { app in
+          OptedInAppRow(app: app) { state.optOut(app.id) }
+        }
+        AddAppControls(state: state)
+      }
     }
     .formStyle(.grouped)
     .frame(width: 420)
     .fixedSize(horizontal: false, vertical: true)
+  }
+}
+
+private struct OptedInAppRow: View {
+  let app: AppChoice
+  let remove: () -> Void
+
+  var body: some View {
+    HStack {
+      if let icon = app.icon {
+        Image(nsImage: icon).resizable().frame(width: 18, height: 18)
+      }
+      Text(app.name)
+      Spacer()
+      Button("Remove \(app.name)", systemImage: "minus.circle", action: remove)
+        .labelStyle(.iconOnly)
+        .buttonStyle(.borderless)
+    }
+  }
+}
+
+private struct AddAppControls: View {
+  let state: AppState
+
+  var body: some View {
+    HStack {
+      Menu("Add Running App") {
+        ForEach(state.appsToAdd) { app in
+          Button(app.name) { state.optIn(app.id) }
+        }
+      }
+      .disabled(state.appsToAdd.isEmpty)
+      Button("Choose App…", action: chooseApp)
+    }
+  }
+
+  private func chooseApp() {
+    let panel = NSOpenPanel()
+    panel.allowedContentTypes = [.application]
+    panel.directoryURL = URL(fileURLWithPath: "/Applications")
+    guard panel.runModal() == .OK, let url = panel.url else { return }
+    guard let bundleIdentifier = Bundle(url: url)?.bundleIdentifier else { return }
+    state.optIn(bundleIdentifier)
   }
 }
 

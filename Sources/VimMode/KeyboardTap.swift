@@ -16,7 +16,7 @@ final class KeyboardTap: @unchecked Sendable {
 
   private let lock = NSLock()
   private var machPort: CFMachPort?
-  private var isSupportedAppFrontmost = false
+  private var isOptedInAppFrontmost = false
   private var isInsertMode = true
   private var isDraining = false
   private var pending: [CGEvent] = []
@@ -46,8 +46,8 @@ final class KeyboardTap: @unchecked Sendable {
     return didStart
   }
 
-  func setSupportedAppFrontmost(_ isFrontmost: Bool) {
-    lock.withLock { isSupportedAppFrontmost = isFrontmost }
+  func setOptedInAppFrontmost(_ isFrontmost: Bool) {
+    lock.withLock { isOptedInAppFrontmost = isFrontmost }
   }
 
   fileprivate func reenable() {
@@ -63,7 +63,7 @@ final class KeyboardTap: @unchecked Sendable {
     }
     let isEscape = event.getIntegerValueField(.keyboardEventKeycode) == Self.escapeKeyCode
     return lock.withLock {
-      guard isSupportedAppFrontmost, isDraining || !isInsertMode || isEscape, let copy = event.copy() else {
+      guard isOptedInAppFrontmost, isDraining || !isInsertMode || isEscape, let copy = event.copy() else {
         return false
       }
       pending.append(copy)

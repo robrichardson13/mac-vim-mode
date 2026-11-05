@@ -32,7 +32,6 @@ if ! swift build -c release --product vim-mode > "$LOG" 2>&1; then
 fi
 
 pkill -x "$APP" 2>/dev/null || true
-# open fails with -600 while the old process is still exiting.
 for _ in $(seq 50); do pgrep -x "$APP" >/dev/null || break; sleep 0.1; done
 
 rm -rf "$BUNDLE"
@@ -60,5 +59,7 @@ echo "built $PWD/$BUNDLE ($BUNDLE_ID)"
 
 [ "${1:-}" = "--no-launch" ] && exit 0
 # Background: agents rebuild to check their work, and a plain open takes Rob's focus.
-open -g "$BUNDLE"
+# Retried because open fails with -600 for a moment after the old process has gone.
+for _ in $(seq 10); do open -g "$BUNDLE" 2>/dev/null && break; sleep 0.3; done
+pgrep -x "$APP" >/dev/null || open -g "$BUNDLE"
 echo "relaunched $APP"
