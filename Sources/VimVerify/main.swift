@@ -5,6 +5,8 @@ import VimCore
 setvbuf(stdout, nil, _IOLBF, 0)
 
 let usesTextEdit = CommandLine.arguments.contains("--textedit")
+let runsSafetyCheck = CommandLine.arguments.contains("--safety-check")
+let screenshots = CommandLine.arguments.contains("--screenshots") ? ScenarioScreenshots.prepare() : nil
 let scenarioFilter = CommandLine.arguments.dropFirst().first { !$0.hasPrefix("--") }
 let watch = UserInputWatch()
 var vimMode: Process?
@@ -17,14 +19,13 @@ do {
   defer { vimMode?.terminate() }
   let target: TypingTarget = usesTextEdit ? try TextEditDocument.open() : try SlackDraft.open()
   defer { target.close() }
-  let failures = try runScenarios(matching: scenarioFilter, in: target)
+  let failures = runsSafetyCheck ? try runSafetyCheck(in: target) : try runScenarios(matching: scenarioFilter, in: target)
   print(failures == 0 ? "PASS" : "FAIL: \(failures) scenario(s)")
   exitCode = failures == 0 ? 0 : 1
 } catch {
   print("ABORTED: \(error). Check the draft or document for leftover test text.")
   exitCode = 2
 }
-exit(exitCode)
 
 func prepare() throws -> String? {
   guard AXIsProcessTrusted() else { throw Abort("the app running this needs Accessibility") }
@@ -55,6 +56,7 @@ func run(_ scenario: Scenario, expecting axValue: String, in field: AppField, wi
   let stoppedBefore = VimLog.stoppedCount
   try keyboard.press(Key.parse(scenario.keys))
   VimLog.waitUntilQuiet()
+  screenshots?.capture(scenario.name, of: field)
   var problems: [String] = []
   let newStops = VimLog.stoppedCount - stoppedBefore
   if newStops > 0 { problems.append("vim-mode stopped \(newStops) time(s): \(VimLog.lastStop ?? "")") }
@@ -69,6 +71,38 @@ func run(_ scenario: Scenario, expecting axValue: String, in field: AppField, wi
     problems.append("caret bounds \(bounds.width)x\(bounds.height), expected over emoji: \(expected)")
   }
   return problems.isEmpty ? nil : problems.joined(separator: "; ")
+}
+
+/// Sees both safety checks fire for real. The draft is emptied again before the abort check, which
+/// can't leave text behind because it stops before posting its key.
+func runSafetyCheck(in target: TypingTarget) throws -> Int {
+  var failures = 0
+  let keyboard = Keyboard(beforeEachKey: {
+    if watch.wasInterrupted { throw Abort("you touched the keyboard or mouse") }
+    try target.confirmFocused()
+  })
+  if !usesTextEdit {
+    try keyboard.press(Key.parse("x"))
+    waitUntilStable { target.field.axValue }
+    let refusal = Result { try SlackDraft.open() }
+    if case .failure(let error) = refusal {
+      print("ok   non-empty draft refused: \(error)")
+    } else {
+      print("FAIL non-empty draft wasn't refused")
+      failures += 1
+    }
+    guard target.field.axValue == "x" else { throw Abort("the draft isn't exactly the test text; leaving it") }
+    try clear(target.field, with: keyboard)
+  }
+  Keyboard.postUntaggedF19()
+  do {
+    try keyboard.press(Key.parse("y"))
+    print("FAIL a key from outside the driver didn't stop it")
+    failures += 1
+  } catch {
+    print("ok   stopped by outside input: \(error)")
+  }
+  return failures
 }
 
 func clear(_ field: AppField, with keyboard: Keyboard) throws {
@@ -139,3 +173,6 @@ protocol TypingTarget {
   func expectedAxValue(for scenario: Scenario) -> String?
   func close()
 }
+
+// Stays last: anything after it warns as never executed.
+exit(exitCode)

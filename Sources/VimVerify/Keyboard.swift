@@ -9,15 +9,18 @@ enum Key {
   case selectAll
   case delete
   case controlA
+  case controlR
   case newDocument
 
-  /// `<esc>` is Escape, `<c-a>` is Ctrl-A and a newline is Shift-Return; everything else is typed as itself.
+  /// `<esc>` is Escape, `<c-a>` and `<c-r>` are Ctrl-A and Ctrl-R, and a newline is Shift-Return; everything else is typed as itself.
   static func parse(_ text: String) -> [Key] {
     let tokens = text.replacingOccurrences(of: "<esc>", with: "\u{1B}").replacingOccurrences(of: "<c-a>", with: "\u{1}")
+      .replacingOccurrences(of: "<c-r>", with: "\u{12}")
     return tokens.map { character in
       switch character {
       case "\u{1B}": .escape
       case "\u{1}": .controlA
+      case "\u{12}": .controlR
       case "\n": .softNewline
       default: .character(character)
       }
@@ -48,8 +51,17 @@ struct Keyboard {
     case .selectAll: post(keyCode: 0, flags: .maskCommand)
     case .delete: post(keyCode: 51)
     case .controlA: post(keyCode: 0, flags: .maskControl)
+    case .controlR: post(keyCode: 15, flags: .maskControl)
     case .newDocument: post(keyCode: 45, flags: .maskCommand)
     }
+  }
+
+  /// A key with no text that looks like Rob's own: untagged, so the input watch has to notice it.
+  static func postUntaggedF19() {
+    for isKeyDown in [true, false] {
+      CGEvent(keyboardEventSource: nil, virtualKey: 80, keyDown: isKeyDown)?.post(tap: .cghidEventTap)
+    }
+    Thread.sleep(forTimeInterval: 0.2)
   }
 
   private func post(keyCode: CGKeyCode, flags: CGEventFlags = [], characters: String? = nil) {

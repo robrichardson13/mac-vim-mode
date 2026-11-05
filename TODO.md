@@ -30,10 +30,10 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 
 ## Verification loop
 
-- [ ] Add a screenshot check, for the overlay and for cases Accessibility can't settle like the emoji ones. Needs Screen Recording permission.
-- [ ] Add scenarios for untested commands: `C`, `cc`, `s`, `S`, `O`, `X`, `P`, `de`, `ciw`, `daw`, `k`, `V`, counts and Ctrl-R.
-- [ ] Test the driver's abort on keyboard or mouse input, plus its non-empty-draft refusal. Neither has been seen firing in a real run.
-- [ ] Fix the "will never be executed" build warning in `Sources/VimVerify/main.swift`.
+- [ ] Rob: grant Screen Recording, then look at a `vim-verify --screenshots` run. It's built and reports "not permitted" cleanly, but has never captured an image.
+- [x] Add scenarios for untested commands: `C`, `cc`, `s`, `S`, `O`, `X`, `P`, `de`, `ciw`, `daw`, `k`, `V`, counts and Ctrl-R.
+- [x] Test the driver's abort on input, plus its non-empty-draft refusal: `vim-verify --safety-check`. It fires the abort with a synthetic untagged key, so a physical key press and a mouse click are still unseen.
+- [x] Fix the "will never be executed" build warning in `Sources/VimVerify/main.swift`.
 
 ## Later
 

@@ -9,6 +9,8 @@ description: Test vim-mode against the real Slack message box by running scripte
     swift build && .build/debug/vim-verify          # every scenario
     .build/debug/vim-verify dd          # scenarios whose name contains "dd"
     .build/debug/vim-verify --textedit  # in a new untitled TextEdit document, instead of Slack
+    .build/debug/vim-verify --safety-check  # sees the non-empty-draft refusal and input abort fire
+    .build/debug/vim-verify --screenshots   # also saves the field's area per scenario to /tmp/vim-verify-screenshots
 
 Exit codes: 0 all passed, 1 a scenario failed, 2 aborted by a safety check.
 
@@ -21,6 +23,10 @@ The self-DM must already be open, with its message box focused and empty.
 ## TextEdit
 
 The driver opens its own document, gates every key on that window, then closes it through the sheet's Delete and quits TextEdit if it launched it. Don't kill TextEdit mid-run: an abandoned untitled document comes back as a real file in Rob's iCloud TextEdit folder. Don't list or move files under `~/Library/Mobile Documents/` from a tab either, because that hangs on a permission prompt.
+
+`--screenshots` needs Screen Recording for the app running it. Without that it says "not permitted" and runs the scenarios anyway.
+
+`--safety-check` fires the abort with an untagged key, so a real keyboard press and any mouse click stay untested.
 
 ## Reading results
 
