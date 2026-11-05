@@ -247,11 +247,17 @@ public struct VimEngine: Sendable {
   }
 
   mutating func perform(_ op: Operator, over range: NSRange, linewise: Bool, _ buffer: VimBuffer) {
-    guard range.length > 0 || op == .change else { return }
+    let isDeletingLastLine = linewise && op == .delete && range.location > 0 && NSMaxRange(range) == buffer.length
+    guard range.length > 0 || op == .change || isDeletingLastLine else { return }
     yank(buffer.substring(range), linewise: linewise)
     switch op {
     case .yank:
       buffer.setCursor(range.location)
+    case .delete where linewise:
+      // The last line has no newline of its own, so it takes the one before it.
+      let lines = isDeletingLastLine ? NSRange(location: range.location - 1, length: range.length + 1) : range
+      buffer.replace(lines, with: "")
+      buffer.setCursor(buffer.firstNonBlank(at: min(lines.location, buffer.length)))
     case .delete:
       buffer.replace(range, with: "")
       buffer.clampCursorOntoCharacter()

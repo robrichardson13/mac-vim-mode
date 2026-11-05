@@ -64,6 +64,14 @@ import Testing
   #expect(map?.caretLength == 3)
 }
 
+@Test func aTrailingBlankLineSharesItsCaretWithTheLineEndAbove() {
+  let map = FieldTextMap(lines: ["a", ""], caretText: "a\n")
+  #expect(map?.text == "a\n")
+  #expect(map?.caret(forOffset: 1) == 1)
+  #expect(map?.caret(forOffset: 2) == 1)
+  #expect(map?.offset(forCaret: 1) == 2)
+}
+
 @Test func linesThatDontMatchTheCaretTextAreRejected() {
   #expect(FieldTextMap(lines: ["1. a"], caretText: "a") == nil)
   #expect(FieldTextMap(lines: ["a"], caretText: "ab") == nil)

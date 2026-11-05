@@ -7,6 +7,8 @@ struct Scenario {
   let keys: String
   let axValue: String
   var caret: Int?
+  /// True when the caret should look like it covers an emoji, read from its bounds.
+  var caretCoversEmoji: Bool?
   /// Its expectation depends on how Slack misreports an emoji.
   var isSlackOnly = false
 }
@@ -32,4 +34,14 @@ let scenarios = [
   Scenario(name: "emoji-x-before", seed: "a😀b", keys: "<esc>0x", axValue: "\nb", caret: 0, isSlackOnly: true),
   // `yy` takes only b's line if the break after the emoji was seen, and "ab" if it wasn't.
   Scenario(name: "emoji-at-line-end", seed: "a😀\nb", keys: "<esc>yyp", axValue: "a\n\nb\nb", isSlackOnly: true),
+  Scenario(name: "dd-last-line", seed: "one\ntwo", keys: "<esc>dd", axValue: "one", caret: 0),
+  Scenario(name: "V-d-last-line", seed: "one\ntwo", keys: "<esc>Vd", axValue: "one", caret: 0),
+  Scenario(name: "dd-trailing-blank", seed: "one\n", keys: "<esc>dd", axValue: "one"),
+  Scenario(name: "quote-next-line-start", seed: "> one\ntwo", keys: "<esc>ggjx", axValue: " one\nwo", isSlackOnly: true),
+  Scenario(name: "quote-line-end", seed: "> one\ntwo", keys: "<esc>gg$x", axValue: " on\ntwo", isSlackOnly: true),
+  Scenario(name: "inline-code-dd", seed: "`code` b", keys: "<esc>dd", axValue: "\n", isSlackOnly: true),
+  Scenario(name: "emoji-before-line-end-A", seed: "a😀\nb", keys: "<esc>ggAX", axValue: "a\n\nX\nb", isSlackOnly: true),
+  Scenario(name: "blank-line-jj", seed: "one\n\ntwo", keys: "<esc>ggjjx", axValue: "one\nwo", isSlackOnly: true),
+  Scenario(name: "blank-line-dd", seed: "one\n\ntwo", keys: "<esc>ggjddx", axValue: "one\nwo", isSlackOnly: true),
+  Scenario(name: "blank-line-caret-isnt-emoji", seed: "one\n\ntwo", keys: "<esc>ggj", axValue: "one\ntwo", caretCoversEmoji: false, isSlackOnly: true),
 ]

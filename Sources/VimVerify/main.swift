@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import VimCore
 
 setvbuf(stdout, nil, _IOLBF, 0)
 
@@ -62,6 +63,10 @@ func run(_ scenario: Scenario, expecting axValue: String, in field: AppField, wi
   }
   if let caret = scenario.caret, field.selection != NSRange(location: caret, length: 0) {
     problems.append("selection \(field.selection.location),\(field.selection.length), expected caret \(caret)")
+  }
+  if let expected = scenario.caretCoversEmoji, let bounds = field.caretBounds,
+    caretCoversEmoji(width: bounds.width, height: bounds.height) != expected {
+    problems.append("caret bounds \(bounds.width)x\(bounds.height), expected over emoji: \(expected)")
   }
   return problems.isEmpty ? nil : problems.joined(separator: "; ")
 }

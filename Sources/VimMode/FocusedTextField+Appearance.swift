@@ -19,11 +19,21 @@ extension FocusedTextField {
     return CGRect(origin: origin, size: extent)
   }
 
-  /// Tells a line's end from the next line's start, which report the same caret position.
-  /// Slack's message box starts text 13 points in, so a caret further right has text before it.
+  /// Tells a line's end from the next line's start, which report the same caret position but sit
+  /// on different rows. Measured from the row's first text, because a quote indents its lines.
   var isCaretPastLineStart: Bool {
-    guard let caretBounds, let frame else { return false }
-    return caretBounds.minX - frame.minX > 15
+    guard let caretBounds, let rowStart = firstLeafFrame(containingY: caretBounds.midY) else { return false }
+    return caretBounds.minX > rowStart.minX + 2
+  }
+
+  private func firstLeafFrame(containingY y: CGFloat) -> CGRect? {
+    for child in copy(kAXChildrenAttribute) as? [AXUIElement] ?? [] {
+      AXUIElementSetMessagingTimeout(child, 0.25)
+      let node = FocusedTextField(element: child)
+      guard let frame = node.frame, frame.minY <= y, y <= frame.maxY else { continue }
+      return node.firstLeafFrame(containingY: y) ?? frame
+    }
+    return nil
   }
 
   /// Text markers first, because Slack's AXBoundsForRange returns the same empty rectangle for every

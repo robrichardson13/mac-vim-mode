@@ -45,7 +45,10 @@ Other quirks:
 - A line's end and the next line's start share a caret position, and an emoji has no position of its own.
 - Escape can leave the conversation: reaching Slack with a draft present, it moved a self-DM to the DMs view, so normal mode swallows it. ⌘[ goes back.
 - Setting a caret shared by a line's end and the next line's start lands on the next line. Setting it one short and pressing a real → or ⇧→ stays on this line.
-- Both spots read back as the same caret position, but their bounds differ: the message box starts text 13 points in from its frame.
+- Both spots read back as the same caret position, but their bounds differ. Compare with the row's first text in the tree, because a quote indents further than plain text.
+- A caret on a last blank line reads as the position before that line's newline in `AXStringForRange`.
+- A real → from one short of a line end stops before a trailing emoji; ⌘→ passes it.
+- Inline code is an `AXGroup` inside its line, with subrole `AXCodeStyleGroup`.
 - A new blank line leaves `AXValue` unchanged and only adds a newline to `AXStringForRange`. An emptied field reads `"\n"` from both.
 - The system-wide `AXFocusedApplication` returns -25204, and `NSWorkspace.frontmostApplication` goes stale with no run loop. `lsappinfo` reports the frontmost app correctly.
 - Caret bounds have zero width in text, about square on an emoji, and the full line width on an empty line.
@@ -54,9 +57,9 @@ Other quirks:
 
 Not covered by a scenario:
 
-- The line-end test assumes unindented text, so a quote or list may misread a next-line start as a line end.
-- The one-short step assumes a character before the line end, so an emoji there may stop short of it.
-- `FieldTextMap` collapses a blank line, so the engine's text has one line fewer than the field.
+- A line holding only an emoji: the one-short step lands on the line above.
+- `x` on the last letter before a trailing emoji leaves the emoji, and so does `D`: a selection stops before it on purpose.
+- Fields that fall back to reconciling text sources still collapse a blank line and can misread adjacent emoji as a line break.
 - Visual mode's `j` and `k` move by real lines, so they can't step through a wrapped line.
 
 ## Relationship to nib

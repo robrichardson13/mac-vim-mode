@@ -29,17 +29,21 @@ private func caretString(length: Int, of element: AXUIElement) -> String? {
 private func readFieldNode(_ element: AXUIElement, depth: Int = 0) -> FieldNode? {
   guard depth < 8 else { return nil }
   AXUIElementSetMessagingTimeout(element, 0.25)
-  let names = [kAXRoleAttribute, kAXValueAttribute, kAXChildrenAttribute] as CFArray
+  let names = [kAXRoleAttribute, kAXSubroleAttribute, kAXValueAttribute, kAXChildrenAttribute] as CFArray
   var values: CFArray?
   guard AXUIElementCopyMultipleAttributeValues(element, names, [], &values) == .success,
-    let attributes = values as? [Any], attributes.count == 3
+    let attributes = values as? [Any], attributes.count == 4
   else { return nil }
   var children: [FieldNode] = []
-  for child in attributes[2] as? [AXUIElement] ?? [] {
+  for child in attributes[3] as? [AXUIElement] ?? [] {
     guard let node = readFieldNode(child, depth: depth + 1) else { return nil }
     children.append(node)
   }
-  return FieldNode(role: attributes[0] as? String ?? "", value: attributes[1] as? String ?? "", children: children)
+  return FieldNode(
+    role: attributes[0] as? String ?? "",
+    subrole: attributes[1] as? String ?? "",
+    value: attributes[2] as? String ?? "",
+    children: children)
 }
 
 

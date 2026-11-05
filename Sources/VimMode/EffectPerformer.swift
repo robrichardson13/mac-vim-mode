@@ -37,23 +37,10 @@ struct EffectPerformer {
     case .setSelection(let range):
       return select(range)
     case .replace(let range, let replacement):
-      guard select(range), selectionHolds(range, of: expectedText) else { return false }
-      let caretLengthBefore = field.textMap?.caretLength ?? 0
-      if replacement.isEmpty {
-        Keystrokes.post(.delete)
-      } else {
-        postText(replacement)
+      if range.length > 0, field.textMap?.sharesCaretWithNextLine(range.location) == true {
+        return replaceFromLineEnd(range, with: replacement, expectedText: &expectedText)
       }
-      let edited = NSMutableString(string: expectedText)
-      edited.replaceCharacters(in: range, with: replacement)
-      expectedText = edited as String
-      let target = expectedText
-      let startedAt = Date()
-      let didApply = waitUntil(timeout: Self.editTimeout) {
-        field.textMap.map { editLanded(in: $0, expecting: target, caretLengthBefore: caretLengthBefore) } ?? false
-      }
-      Log.write("edit \(didApply ? "applied" : "not applied") after \(Int(Date().timeIntervalSince(startedAt) * 1000))ms")
-      return didApply
+      return replaceSelection(range, with: replacement, expectedText: &expectedText)
     case .moveCaretUp:
       Keystrokes.post(.upArrow)
     case .moveCaretDown:
@@ -66,14 +53,53 @@ struct EffectPerformer {
     return true
   }
 
+  private func replaceSelection(_ range: NSRange, with replacement: String, expectedText: inout String) -> Bool {
+    guard select(range), selectionHolds(range, of: expectedText) else { return false }
+    let caretLengthBefore = field.textMap?.caretLength ?? 0
+    if replacement.isEmpty {
+      Keystrokes.post(.delete)
+    } else {
+      postText(replacement)
+    }
+    return editApplied(replacing: range, with: replacement, expectedText: &expectedText, caretLengthBefore: caretLengthBefore)
+  }
+
+  /// A selection can't start at a line end, because setting that caret lands on the next line. So
+  /// the text after the break goes first, then Delete joins the lines from the next line's start.
+  private func replaceFromLineEnd(_ range: NSRange, with replacement: String, expectedText: inout String) -> Bool {
+    let afterBreak = NSRange(location: range.location + 1, length: range.length - 1)
+    if afterBreak.length > 0, !replaceSelection(afterBreak, with: "", expectedText: &expectedText) { return false }
+    guard select(NSRange(location: afterBreak.location, length: 0)) else { return false }
+    let caretLengthBefore = field.textMap?.caretLength ?? 0
+    Keystrokes.post(.delete)
+    let lineBreak = NSRange(location: range.location, length: 1)
+    guard editApplied(replacing: lineBreak, with: "", expectedText: &expectedText, caretLengthBefore: caretLengthBefore) else { return false }
+    if replacement.isEmpty { return true }
+    return replaceSelection(NSRange(location: range.location, length: 0), with: replacement, expectedText: &expectedText)
+  }
+
+  private func editApplied(replacing range: NSRange, with replacement: String, expectedText: inout String, caretLengthBefore: Int) -> Bool {
+    let edited = NSMutableString(string: expectedText)
+    edited.replaceCharacters(in: range, with: replacement)
+    expectedText = edited as String
+    let target = expectedText
+    let startedAt = Date()
+    let didApply = waitUntil(timeout: Self.editTimeout) {
+      field.textMap.map { editLanded(in: $0, expecting: target, caretLengthBefore: caretLengthBefore) } ?? false
+    }
+    Log.write("edit \(didApply ? "applied" : "not applied") after \(Int(Date().timeIntervalSince(startedAt) * 1000))ms")
+    return didApply
+  }
+
   private func select(_ range: NSRange) -> Bool {
     guard let textMap = field.textMap else { return false }
     let caretRange = textMap.caretRange(forRange: range)
     if textMap.sharesCaretWithNextLine(NSMaxRange(range)), let shortRange = oneShort(of: caretRange, requestedLength: range.length) {
       // Setting a shared caret lands on the next line. A real key from one short stays on this one.
+      // A caret takes ⌘→ to pass a trailing emoji; a selection takes ⇧→ to leave that emoji alone.
       field.setCaretSelection(shortRange)
       guard landed(on: shortRange) else { return false }
-      Keystrokes.post(.rightArrow, flags: caretRange.length > 0 ? .maskShift : [])
+      Keystrokes.post(.rightArrow, flags: caretRange.length > 0 ? .maskShift : .maskCommand)
     } else {
       field.setCaretSelection(caretRange)
     }

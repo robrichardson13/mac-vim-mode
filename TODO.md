@@ -16,11 +16,11 @@ Known behavior and measurements are in `CLAUDE.md`. Test with `/verify`.
 
 ## Suspected, needs a scenario
 
-- [ ] Indented text: the line-end check assumes a 13-point inset, so quotes and lists may misread a next-line start as a line end.
-- [ ] Emoji right before a line end: the one-short caret step may stop short of it.
-- [ ] Blank lines: `FieldTextMap` collapses them, so the engine sees one line fewer than the field.
-- [ ] A selection that starts at a line end: the fix only handles ranges that end there.
-- [ ] Caret on an empty line: the `caretCoversEmoji` fix passes unit tests but hasn't been seen in Slack.
+- [x] Indented text: the line-end check assumes a 13-point inset, so quotes and lists may misread a next-line start as a line end.
+- [x] Emoji right before a line end: the one-short caret step may stop short of it.
+- [x] Blank lines: `FieldTextMap` collapses them, so the engine sees one line fewer than the field.
+- [x] A selection that starts at a line end: the fix only handles ranges that end there.
+- [x] Caret on an empty line: the `caretCoversEmoji` fix passes unit tests but hasn't been seen in Slack.
 
 ## Known limits
 

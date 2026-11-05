@@ -23,6 +23,18 @@ struct AppField {
     return map.range(forCaretRange: caretRange)
   }
 
+  var caretBounds: CGRect? {
+    guard let element = focusedElement, let markers = Self.attribute("AXSelectedTextMarkerRange", of: element) else { return nil }
+    var value: CFTypeRef?
+    guard
+      AXUIElementCopyParameterizedAttributeValue(element, "AXBoundsForTextMarkerRange" as CFString, markers, &value) == .success,
+      let value
+    else { return nil }
+    var bounds = CGRect.zero
+    AXValueGetValue(value as! AXValue, .cgRect, &bounds)
+    return bounds
+  }
+
   var isFocusedElementATextArea: Bool {
     Self.attribute(kAXRoleAttribute, of: focusedElement) as? String == kAXTextAreaRole
   }

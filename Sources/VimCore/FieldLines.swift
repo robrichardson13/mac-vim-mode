@@ -1,11 +1,13 @@
 /// One element of a field's Accessibility tree.
 public struct FieldNode: Sendable {
   public let role: String
+  public let subrole: String
   public let value: String
   public let children: [FieldNode]
 
-  public init(role: String, value: String = "", children: [FieldNode] = []) {
+  public init(role: String, subrole: String = "", value: String = "", children: [FieldNode] = []) {
     self.role = role
+    self.subrole = subrole
     self.value = value
     self.children = children
   }
@@ -31,6 +33,8 @@ private struct LineCollector {
       currentLine = (currentLine ?? "") + node.value
     case "AXImage":
       currentLine = currentLine ?? ""
+    case "AXGroup" where node.subrole.hasSuffix("StyleGroup"):
+      for child in node.children { add(child) }
     case "AXGroup", "AXList":
       finishLine()
       if node.children.isEmpty { lines.append("") }

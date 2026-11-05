@@ -29,6 +29,11 @@ private func field(_ children: FieldNode...) -> FieldNode { FieldNode(role: "AXT
   #expect(fieldLines(in: field(paragraph(text("a "), link, text(" c")))) == ["a b c"])
 }
 
+@Test func inlineCodeStaysInItsLine() {
+  let code = FieldNode(role: "AXGroup", subrole: "AXCodeStyleGroup", children: [text("a")])
+  #expect(fieldLines(in: field(paragraph(code, text(" b")))) == ["a b"])
+}
+
 @Test func aFieldWithNoChildrenHasNoLines() {
   #expect(fieldLines(in: FieldNode(role: "AXTextArea", value: "a\nb")) == nil)
 }

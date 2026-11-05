@@ -64,6 +64,7 @@ public struct FieldTextMap: Sendable {
     var units: [UInt16] = []
     var carets: [Int] = []
     var caretIndex = 0
+    var endCaret: Int?
     for (lineIndex, line) in lines.enumerated() {
       let isLast = lineIndex == lines.count - 1
       for unit in line.utf16 {
@@ -76,12 +77,16 @@ public struct FieldTextMap: Sendable {
         units.append(newline)
         carets.append(caretIndex)
       }
-      // Only a blank line takes a caret position of its own.
-      if line.isEmpty, caretIndex < caret.count, caret[caretIndex] == newline { caretIndex += 1 }
+      // Only a blank line takes a caret position of its own. A last one reads as the position
+      // before its newline, the same as the line end above it.
+      if line.isEmpty, caretIndex < caret.count, caret[caretIndex] == newline {
+        caretIndex += 1
+        if isLast { endCaret = caretIndex - 1 }
+      }
     }
     guard caretIndex == caret.count else { return nil }
     text = String(utf16CodeUnits: units, count: units.count)
-    caretForOffset = carets + [caretIndex]
+    caretForOffset = carets + [endCaret ?? caretIndex]
   }
 
   public var caretLength: Int { caretForOffset.last ?? 0 }

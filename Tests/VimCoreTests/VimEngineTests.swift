@@ -229,6 +229,27 @@ private struct Field {
   #expect(field.text == "first\nthird")
 }
 
+@Test func ddOnTheLastLineTakesTheLineBreakBeforeIt() {
+  var field = Field("one\n  two", at: 6)
+  field.type("dd")
+  #expect(field.text == "one")
+  #expect(field.cursor == 0)
+}
+
+@Test func ddOnATrailingBlankLineRemovesIt() {
+  var field = Field("one\n", at: 4)
+  field.type("dd")
+  #expect(field.text == "one")
+  #expect(field.cursor == 0)
+}
+
+@Test func ddMovesToTheNextLinesFirstCharacter() {
+  var field = Field("one\n  two\nthree", at: 0)
+  field.type("dd")
+  #expect(field.text == "  two\nthree")
+  #expect(field.cursor == 2)
+}
+
 @Test func yankLineThenPasteBelow() {
   var field = Field("one\ntwo", at: 0)
   field.type("yyp")
@@ -278,7 +299,7 @@ private struct Field {
   field.type("j")
   #expect(field.selection == NSRange(location: 4, length: 9))
   field.type("d")
-  #expect(field.text == "one\n")
+  #expect(field.text == "one")
   #expect(field.engine.mode == .normal)
 }
 
